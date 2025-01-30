@@ -16,6 +16,10 @@ export class ElevenLabsService {
       const audioStream = await this.client.textToSpeech.convert("21m00Tcm4TlvDq8ikWAM", {
         model_id: "eleven_multilingual_v2",
         text: text,
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75
+        }
       });
 
       // Convert the stream to a Uint8Array

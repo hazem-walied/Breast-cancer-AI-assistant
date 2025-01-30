@@ -135,12 +135,20 @@
   font-weight: 600;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(255, 152, 0, 0.1);
+  opacity: 1;
+  transform: scale(1);
 }
 
 .stopSpeakingButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 152, 0, 0.2);
   background: var(--button-hover);
+}
+
+.stopSpeakingButton.hidden {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
 }
 
 .button:disabled,

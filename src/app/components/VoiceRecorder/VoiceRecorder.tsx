@@ -34,6 +34,16 @@ export default function VoiceRecorder() {
   useEffect(() => {
     if (!speechSynthesisRef.current) {
       speechSynthesisRef.current = new SpeechSynthesisService();
+      const handleSpeakingStateChange = (isSpeaking: boolean) => {
+        setIsSpeaking(isSpeaking);
+      };
+      speechSynthesisRef.current.addSpeakingStateListener(handleSpeakingStateChange);
+      
+      return () => {
+        if (speechSynthesisRef.current) {
+          speechSynthesisRef.current.removeSpeakingStateListener(handleSpeakingStateChange);
+        }
+      };
     }
   }, []);
 
@@ -46,12 +56,10 @@ export default function VoiceRecorder() {
 
     setIsProcessing(true);
     try {
-      // Clear previous response before getting new one
       setResponse('');
       
       const aiResponse = await getGeminiResponse(text);
 
-      // Update conversations with new entries only
       const newConversations: Conversation[] = [
         ...conversations,
         { role: 'user', content: text.trim() },
@@ -59,13 +67,10 @@ export default function VoiceRecorder() {
       ];
       setConversations(newConversations);
 
-      // Set new response and speak it
       setResponse(aiResponse);
       
-      // Stop any ongoing speech before starting new one
       if (speechSynthesisRef.current) {
         speechSynthesisRef.current.stop();
-        // Small delay to ensure previous speech is fully stopped
         await new Promise(resolve => setTimeout(resolve, 100));
         setIsSpeaking(true);
         speechSynthesisRef.current.speak(aiResponse, currentLanguage);
@@ -161,12 +166,20 @@ export default function VoiceRecorder() {
   useEffect(() => {
     const checkSpeakingState = setInterval(() => {
       if (speechSynthesisRef.current) {
-        setIsSpeaking(speechSynthesisRef.current.isSpeaking());
+        const isSpeakingNow = speechSynthesisRef.current.isSpeaking();
+        setIsSpeaking(isSpeakingNow);
       }
     }, 100);
 
     return () => clearInterval(checkSpeakingState);
   }, []);
+
+  const handleStopSpeaking = () => {
+    if (speechSynthesisRef.current) {
+      speechSynthesisRef.current.stop();
+      setIsSpeaking(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -211,23 +224,18 @@ export default function VoiceRecorder() {
         </button>
 
         {isSpeaking && (
-        <button
-          onClick={() => {
-            if (speechSynthesisRef.current) {
-              speechSynthesisRef.current.stop();
-              setIsSpeaking(false);
-            }
-          }}
-          className={styles.stopSpeakingButton}
-        >
-          <span className={styles.buttonIcon}>
-            <FaVolumeMute />
-          </span>
-          <span className={styles.buttonText}>
-            Stop Speaking
-          </span>
-        </button>
-      )}
+          <button
+            onClick={handleStopSpeaking}
+            className={`${styles.stopSpeakingButton} ${!isSpeaking ? styles.hidden : ''}`}
+          >
+            <span className={styles.buttonIcon}>
+              <FaVolumeMute />
+            </span>
+            <span className={styles.buttonText}>
+              Stop Speaking
+            </span>
+          </button>
+        )}
       </div>
 
       {error && (
@@ -278,4 +286,3 @@ export default function VoiceRecorder() {
     </div>
   );
 }
-

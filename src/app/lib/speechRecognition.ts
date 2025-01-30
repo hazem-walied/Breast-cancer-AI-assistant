@@ -19,6 +19,12 @@ export class SpeechRecognitionService {
         this.recognition.continuous = true;
         this.recognition.interimResults = true;
         this.recognition.lang = language;
+        
+        // Add specific configurations for Arabic
+        if (language === 'ar-SA') {
+          this.recognition.continuous = false; // Better for Arabic recognition
+          this.recognition.maxAlternatives = 1;
+        }
       }
     }
   }

@@ -119,13 +119,200 @@
 
 // src/app/lib/speechSynthesis.ts
 
+// import { ElevenLabsService } from './elevenLabs';
+
+// export class SpeechSynthesisService {
+//   speaking: boolean = false;
+//   private elevenLabs: ElevenLabsService;
+//   private audioElement: HTMLAudioElement | null = null;
+//   private currentLanguage: 'en-US' | 'ar-SA' = 'en-US';
+//   config: { optimalChunkSize: number; chunkDelay: number; speechRate: number; };
+
+//   constructor(config = {
+//     optimalChunkSize: 200,
+//     chunkDelay: 100,
+//     speechRate: 0.9
+//   }) {
+//     this.config = config;
+//     this.elevenLabs = new ElevenLabsService();
+//     if (typeof window !== 'undefined') {
+//       this.audioElement = new Audio();
+//       this.resumeSpeechIfNeeded();
+//     }
+//   }
+
+//   private chunkText(text: string): string[] {
+//     // First, split by sentence endings while preserving the punctuation
+//     const rawChunks = text.match(/[^.!?]+[.!?]+/g) || [];
+    
+//     // If no sentence breaks found, return the whole text as one chunk
+//     if (rawChunks.length === 0) {
+//       return [text];
+//     }
+  
+//     // Combine smaller chunks into optimal-sized chunks (around 200 characters)
+//     const optimalChunks: string[] = [];
+//     let currentChunk = '';
+//     const OPTIMAL_CHUNK_SIZE = 200;
+  
+//     for (const chunk of rawChunks) {
+//       if (currentChunk.length + chunk.length <= OPTIMAL_CHUNK_SIZE) {
+//         currentChunk += ' ' + chunk.trim();
+//       } else {
+//         if (currentChunk) {
+//           optimalChunks.push(currentChunk.trim());
+//         }
+//         currentChunk = chunk.trim();
+//       }
+//     }
+    
+//     // Add the last chunk if it exists
+//     if (currentChunk) {
+//       optimalChunks.push(currentChunk.trim());
+//     }
+  
+//     return optimalChunks;
+//   }
+
+//   async speak(text: string, language: 'en-US' | 'ar-SA' = 'en-US') {
+//     if (typeof window === 'undefined') return;
+  
+//     this.currentLanguage = language;
+//     this.stop();
+  
+//     // Add a delay to ensure previous speech is fully stopped
+//     await new Promise(resolve => setTimeout(resolve, 300));
+  
+//     if (language === 'ar-SA') {
+//       // Arabic handling remains the same
+//       // ...
+//     } else {
+//       try {
+//         const chunks = this.chunkText(text);
+//         let currentChunk = 0;
+  
+//         const speakChunk = () => {
+//           if (this.currentLanguage !== 'en-US' || currentChunk >= chunks.length) {
+//             this.speaking = false;
+//             return;
+//           }
+  
+//           const utterance = new SpeechSynthesisUtterance(chunks[currentChunk]);
+          
+//           // Get voices and set preferred voice
+//           const voices = window.speechSynthesis.getVoices();
+//           const englishVoice = voices.find(voice => 
+//             voice.lang.includes('en') && 
+//             (voice.name.includes('Microsoft David') ||
+//              voice.name.includes('Google US English Male') ||
+//              voice.name.includes('Male'))
+//           );
+  
+//           if (englishVoice) {
+//             utterance.voice = englishVoice;
+//           }
+  
+//           utterance.lang = 'en-US';
+//           utterance.rate = 0.9; // Slightly slower rate for better reliability
+//           utterance.pitch = 1;
+//           utterance.volume = 1;
+  
+//           // Add a small pause between chunks
+//           if (currentChunk > 0) {
+//             utterance.onstart = () => {
+//               this.speaking = true;
+//             };
+//           }
+  
+//           utterance.onend = () => {
+//             if (this.currentLanguage === 'en-US') {
+//               currentChunk++;
+//               if (currentChunk < chunks.length) {
+//                 // Add a small delay between chunks
+//                 setTimeout(speakChunk, 100);
+//               } else {
+//                 this.speaking = false;
+//               }
+//             }
+//           };
+  
+//           utterance.onerror = (event) => {
+//             console.error('Speech synthesis error occurred:', event);
+//             // Attempt to recover by moving to next chunk
+//             currentChunk++;
+//             if (currentChunk < chunks.length) {
+//               setTimeout(speakChunk, 100);
+//             } else {
+//               this.speaking = false;
+//             }
+//           };
+  
+//           window.speechSynthesis.speak(utterance);
+//         };
+  
+//         // Initialize voices if needed
+//         if (window.speechSynthesis.getVoices().length === 0) {
+//           window.speechSynthesis.addEventListener('voiceschanged', () => {
+//             if (this.currentLanguage === 'en-US') {
+//               speakChunk();
+//             }
+//           }, { once: true });
+//         } else {
+//           speakChunk();
+//         }
+//       } catch (error) {
+//         console.error('Error with Web Speech API:', error);
+//         this.speaking = false;
+//       }
+//     }
+//   }
+
+//   private resumeSpeechIfNeeded() {
+//     if (typeof window === 'undefined') return;
+    
+//     // Chrome bug workaround: speech synthesis sometimes stops unexpectedly
+//     setInterval(() => {
+//       if (this.speaking && !window.speechSynthesis.speaking) {
+//         window.speechSynthesis.resume();
+//       }
+//     }, 1000);
+//   }
+
+//   stop() {
+//     if (typeof window === 'undefined') return;
+    
+//     window.speechSynthesis.cancel();
+    
+//     if (this.audioElement) {
+//       this.audioElement.pause();
+//       this.audioElement.currentTime = 0;
+//       // Remove all event listeners
+//       this.audioElement.onended = null;
+//       this.audioElement.onerror = null;
+//       this.audioElement.oncanplaythrough = null;
+//     }
+    
+//     this.speaking = false;
+//   }
+
+//   isSpeaking(): boolean {
+//     return this.speaking;
+//   }
+// }
+
+
+// src/app/lib/speechSynthesis.ts
+
 import { ElevenLabsService } from './elevenLabs';
 
 export class SpeechSynthesisService {
-  speaking: boolean = false;
+  private speaking: boolean = false;
   private elevenLabs: ElevenLabsService;
   private audioElement: HTMLAudioElement | null = null;
   private currentLanguage: 'en-US' | 'ar-SA' = 'en-US';
+  private utteranceQueue: SpeechSynthesisUtterance[] = [];
+  private intentionalStop: boolean = false;
+  private speakingStateListeners: ((isSpeaking: boolean) => void)[] = [];
 
   constructor() {
     this.elevenLabs = new ElevenLabsService();
@@ -142,23 +329,36 @@ export class SpeechSynthesisService {
     return chunks.map(chunk => chunk.trim());
   }
 
+  private setSpeakingState(state: boolean) {
+    this.speaking = state;
+    this.speakingStateListeners.forEach(listener => listener(state));
+  }
+
+  addSpeakingStateListener(listener: (isSpeaking: boolean) => void) {
+    this.speakingStateListeners.push(listener);
+  }
+
+  removeSpeakingStateListener(listener: (isSpeaking: boolean) => void) {
+    this.speakingStateListeners = this.speakingStateListeners.filter(l => l !== listener);
+  }
+
   async speak(text: string, language: 'en-US' | 'ar-SA' = 'en-US') {
     if (typeof window === 'undefined') return;
 
-    // Store the current language and stop any current speech
     this.currentLanguage = language;
+    this.intentionalStop = false;
     this.stop();
 
-    // Add a small delay to ensure previous speech is fully stopped
     await new Promise(resolve => setTimeout(resolve, 100));
 
     if (language === 'ar-SA') {
       try {
-        this.speaking = true;
-        const audioData = await this.elevenLabs.convertTextToSpeech(text);
+        this.setSpeakingState(true);
+        const processedText = text.trim().normalize('NFKC');
+        const audioData = await this.elevenLabs.convertTextToSpeech(processedText);
         
         if (this.currentLanguage !== 'ar-SA') {
-          this.speaking = false;
+          this.setSpeakingState(false);
           return;
         }
 
@@ -166,50 +366,40 @@ export class SpeechSynthesisService {
         const url = URL.createObjectURL(blob);
 
         if (this.audioElement) {
-          // Remove any previous event listeners
           this.audioElement.onended = null;
           this.audioElement.onerror = null;
-          this.audioElement.oncanplaythrough = null;
-
-          // Set up new audio element
           this.audioElement.src = url;
           
           this.audioElement.onended = () => {
-            this.speaking = false;
+            this.setSpeakingState(false);
             URL.revokeObjectURL(url);
           };
 
           this.audioElement.onerror = () => {
-            console.error('Audio playback error');
-            this.speaking = false;
+            if (!this.intentionalStop) {
+              console.error('Audio playback error');
+            }
+            this.setSpeakingState(false);
             URL.revokeObjectURL(url);
           };
 
-          try {
-            await this.audioElement.play();
-          } catch (error) {
-            console.error('Audio play error:', error);
-            this.speaking = false;
-          }
+          await this.audioElement.play();
         }
       } catch (error) {
-        console.error('Error with ElevenLabs TTS:', error);
-        this.speaking = false;
+        if (!this.intentionalStop) {
+          console.error('Error with ElevenLabs TTS:', error);
+        }
+        this.setSpeakingState(false);
       }
     } else {
       try {
         const chunks = this.chunkText(text);
-        let currentChunk = 0;
-
-        const speakChunk = () => {
-          if (this.currentLanguage !== 'en-US' || currentChunk >= chunks.length) {
-            this.speaking = false;
-            return;
-          }
-
-          const utterance = new SpeechSynthesisUtterance(chunks[currentChunk]);
+        this.utteranceQueue = [];
+        
+        chunks.forEach((chunk, index) => {
+          const utterance = new SpeechSynthesisUtterance(chunk);
           const voices = window.speechSynthesis.getVoices();
-
+          
           const englishVoice = voices.find(voice => 
             voice.lang.includes('en') && 
             (voice.name.includes('Microsoft David') ||
@@ -226,42 +416,40 @@ export class SpeechSynthesisService {
           utterance.pitch = 1;
           utterance.volume = 1;
 
-          utterance.onstart = () => {
-            this.speaking = true;
-          };
+          if (index === 0) {
+            utterance.onstart = () => {
+              this.setSpeakingState(true);
+            };
+          }
 
-          utterance.onend = () => {
-            if (this.currentLanguage === 'en-US') {
-              currentChunk++;
-              if (currentChunk < chunks.length) {
-                speakChunk();
-              } else {
-                this.speaking = false;
+          if (index === chunks.length - 1) {
+            utterance.onend = () => {
+              if (!this.intentionalStop) {
+                this.setSpeakingState(false);
               }
+            };
+          }
+
+          utterance.onerror = (event) => {
+            if (!this.intentionalStop) {
+              console.error('Speech synthesis error occurred:', event);
+              this.setSpeakingState(false);
             }
           };
 
-          utterance.onerror = () => {
-            console.error('Speech synthesis error occurred');
-            this.speaking = false;
-          };
+          this.utteranceQueue.push(utterance);
+        });
 
+        this.setSpeakingState(true);
+        this.utteranceQueue.forEach(utterance => {
           window.speechSynthesis.speak(utterance);
-        };
+        });
 
-        const voices = window.speechSynthesis.getVoices();
-        if (voices.length === 0) {
-          window.speechSynthesis.addEventListener('voiceschanged', () => {
-            if (this.currentLanguage === 'en-US') {
-              speakChunk();
-            }
-          }, { once: true });
-        } else {
-          speakChunk();
-        }
       } catch (error) {
-        console.error('Error with Web Speech API:', error);
-        this.speaking = false;
+        if (!this.intentionalStop) {
+          console.error('Error with Web Speech API:', error);
+        }
+        this.setSpeakingState(false);
       }
     }
   }
@@ -269,18 +457,18 @@ export class SpeechSynthesisService {
   stop() {
     if (typeof window === 'undefined') return;
     
+    this.intentionalStop = true;
     window.speechSynthesis.cancel();
+    this.utteranceQueue = [];
     
     if (this.audioElement) {
       this.audioElement.pause();
       this.audioElement.currentTime = 0;
-      // Remove all event listeners
       this.audioElement.onended = null;
       this.audioElement.onerror = null;
-      this.audioElement.oncanplaythrough = null;
     }
     
-    this.speaking = false;
+    this.setSpeakingState(false);
   }
 
   isSpeaking(): boolean {

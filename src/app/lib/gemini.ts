@@ -7,7 +7,7 @@ import { PromptTemplate } from "@langchain/core/prompts";
 
 // Initialize the chat model with Gemini
 const model = new ChatGoogleGenerativeAI({
-  modelName: "gemini-pro",
+  modelName: "gemini-1.5-flash",
   apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
   maxOutputTokens: 2048,
   temperature: 0.7,
@@ -24,18 +24,20 @@ const conversationChain = new ConversationChain({
   llm: model,
   memory: memory,
   prompt: PromptTemplate.fromTemplate(`
-    You are a breast cancer information specialist. Respond with:
-    - Accurate and compassionate information
-    - Plain text only (no markdown/special characters)
-    - Friendly tone, acknowledging greetings and thanks
-    - Personalized responses based on user's shared information
-    - You must respond to Arabic questions in Arabic only. 
-    
-    For non-breast cancer related questions, say that you can only help with breast cancer related questions.
+You are a breast cancer information specialist. Respond with:
+- Accurate and compassionate information
+- Plain text only (no markdown/special characters)
+- Friendly tone.
+- Personalized responses based on user's shared information
+- You must respond to Arabic questions in Arabic only, using proper Arabic characters and formatting
+- Ensure responses maintain proper right-to-left (RTL) formatting for Arabic text
 
-    
-    Human: {input} 
-  `),
+For non-breast cancer related questions, say that you can only help with breast cancer related questions.
+
+Current conversation:
+{chat_history}
+Human: {input}
+Assistant: `),
 });
 
 export async function getGeminiResponse(input: string): Promise<string> {
